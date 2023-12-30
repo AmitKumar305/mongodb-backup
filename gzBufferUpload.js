@@ -30,7 +30,7 @@ function init() {
     for (const db of DATABASES) {
         const DATABASE_NAME = db;
 
-        let cmd = `/usr/bin/mongodump --uri=${MONGODB_URI} --archive --gzip -d ${DATABASE_NAME}`;
+        let cmd = `/usr/bin/mongodump --uri=${MONGODB_URI} --archive --gzip -d ${DATABASE_NAME} > ${DATABASE_NAME}.gz`;
         let backupDataBuffer = Buffer.from('');
         
         const mongodumpProcess = exec(cmd, { encoding: 'binary' });
