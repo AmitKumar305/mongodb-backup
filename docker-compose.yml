@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  docker-app:
+    image: amit305/mongodb-backup:main
+    container_name: 'docker-app'
+    ports:
+      - 3000:8000
+    environment:
+      - PORT=8080
+  
