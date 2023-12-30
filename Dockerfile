@@ -5,7 +5,6 @@ WORKDIR /src
 COPY package*.json ./
 
 RUN apt-get update
-RUN apt-get install nano
 
 RUN npm install
 
