@@ -4,8 +4,8 @@ WORKDIR /usr/src
 
 COPY package*.json ./
 
-RUN yum update -y && \
-    yum install -y nano
+RUN apt-get update
+RUN apt-get install nano
 
 RUN npm install
 
