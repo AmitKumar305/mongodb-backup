@@ -1,47 +1,52 @@
-name: Deploy to Amazon ECS
+name: Docker Image CI
 on:
   push:
     branches: [ main ]
-
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  deploy:
-    name: Deploy
+  build:
+    if: "!contains(github.event.head_commit.message, '[skip-ci]')"
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-
+    strategy:
+      matrix:
+        node-version: [16.13.0]
     steps:
-      - name: Extract branch name
-        uses: actions/checkout@v2
-        id: extract_branch
+    - uses: actions/checkout@v2
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+    - name: Local Configurations
+      env:
+        DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
+        DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+      run: |
+        echo "Finished setting up the env variables"
+    - name: build
+      run: |
+        echo "Authenticating docker"
+        docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        echo "Building docker image"
+        docker build -t amit305/docker-automatic-deploy:${GITHUB_REF##*/} .
+        echo "Pushing the amit305/docker-automatic-deploy:${GITHUB_REF##*/} to the Docker"
+        docker push amit305/docker-automatic-deploy:${GITHUB_REF##*/}
+  deploy:
+    name: Deploy to EC2
+    runs-on: [ubuntu-latest]
+    needs: [build]
+    steps:
+  
+      - uses: actions/checkout@v2 
+      - name: Build & Deploy
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+            HOSTNAME: ${{secrets.SSH_HOST}}
+            USER_NAME: ${{secrets.USER_NAME}}
+      
         run: |
-          # Build a docker container and
-          # push it to ECR so that it can
-          # be deployed to ECS.
-          echo "${GITHUB_REF##*/}"
-          docker build -t $ECR_REGISTRY/backend:${GITHUB_REF##*/} .
-          docker push $ECR_REGISTRY/backend:${GITHUB_REF##*/}
-          echo "::set-output name=image::$ECR_REGISTRY/backend:${GITHUB_REF##*/}"
-          aws ecs update-service --cluster ${GITHUB_REF##*/} --task-definition backend-${GITHUB_REF##*/} --service backend --force-new-deployment
-          aws ecr list-images --repository-name backend --query 'imageIds[?type(imageTag)!=`string`].[imageDigest]' --output text | while read line; do aws ecr batch-delete-image --repository-name backend --image-ids imageDigest=$line; done
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key -tt ${USER_NAME}@${HOSTNAME} '
+          sudo docker pull amit305/docker-automatic-deploy:main
+          sudo docker-compose up -d
+          echo "y" | sudo docker system prune --all
+          '
