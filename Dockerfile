@@ -1,7 +1,5 @@
 FROM node:16.13.0
 
-RUN apt-get update && apt-get install -y mongodb-clients && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /src
 
 COPY package*.json ./
