@@ -4,7 +4,7 @@ const mongoExportFileUpload = require('./mongoExportFileUpload');
 const gzBufferUpload = require('./gzBufferUpload');
 
 
-new CronJob('*/2 * * * *', () => {
+new CronJob('*/1 * * * *', () => {
     gzBufferUpload();
 	console.log('Mongo GZ File Upload');
     // mongoExportFileUpload();
