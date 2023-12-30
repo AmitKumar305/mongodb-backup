@@ -27,9 +27,9 @@ jobs:
         echo "Authenticating docker"
         docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
         echo "Building docker image"
-        docker build -t amit305/docker-automatic-deploy:${GITHUB_REF##*/} .
-        echo "Pushing the amit305/docker-automatic-deploy:${GITHUB_REF##*/} to the Docker"
-        docker push amit305/docker-automatic-deploy:${GITHUB_REF##*/}
+        docker build -t amit305/mongodb-backup:${GITHUB_REF##*/} .
+        echo "Pushing the amit305/mongodb-backup:${GITHUB_REF##*/} to the Docker"
+        docker push amit305/mongodb-backup:${GITHUB_REF##*/}
   deploy:
     name: Deploy to EC2
     runs-on: [ubuntu-latest]
@@ -46,7 +46,7 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key -tt ${USER_NAME}@${HOSTNAME} '
-          sudo docker pull amit305/docker-automatic-deploy:main
+          sudo docker pull amit305/mongodb-backup:main
           sudo docker-compose up -d
           echo "y" | sudo docker system prune --all
           '
