@@ -1,5 +1,5 @@
 const { CronJob } = require('cron');
-require('dotenv').config();
+require('dotenv').config({ path: '/home/ubuntu/.env' });
 const mongoExportFileUpload = require('./mongoExportFileUpload');
 // const gzBufferUpload = require('./gzBufferUpload');
 
