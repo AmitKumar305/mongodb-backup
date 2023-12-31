@@ -23,6 +23,8 @@ RUN echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.
 RUN apt-get update
 RUN apt-get install -y mongodb-org
 
+RUN npm install
+
 
 COPY . .
 
